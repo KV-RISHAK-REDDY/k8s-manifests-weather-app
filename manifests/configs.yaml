@@ -1,0 +1,17 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: weather-config
+  namespace: weather-app
+data:
+  WEATHER_API_BASE: "http://api.weatherapi.com/v1"
+  MAX_CONCURRENT_REQUESTS: "3"
+  REQUEST_TIMEOUT: "6"
+  SERVICE_1_URL: "http://weather-input-service:8501"
+  SERVICE_2_URL: "http://192.168.49.2:30347"
+  SERVICE_3_URL: "http://weather-dashboard-service:8501"
+  GUNICORN_PROCESSES: "2"
+  GUNICORN_THREADS: "5"
+  GUNICORN_BIND: "0.0.0.0:8080"
+  DB_HOST: "192.168.49.2"
+  DB_PORT: "30739"

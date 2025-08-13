@@ -1,0 +1,147 @@
+# service1-deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: weather-home-service
+  namespace: weather-app
+  labels:
+    app: weather-home
+    tier: frontend
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: weather-home
+  template:
+    metadata:
+      labels:
+        app: weather-home
+        tier: frontend
+    spec:
+      containers:
+      - name: weather-home
+        image: docker.io/kvrr/weather-home:v2.2
+        ports:
+        - containerPort: 8501
+        env:
+        - name: SERVICE_2_URL
+          valueFrom:
+            configMapKeyRef:
+              name: weather-config
+              key: SERVICE_2_URL
+        - name: SERVICE_3_URL
+          valueFrom:
+            configMapKeyRef:
+              name: weather-config
+              key: SERVICE_3_URL
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "100m"
+            ephemeral-storage: "1Gi"
+          limits:
+            memory: "512Mi"
+            cpu: "500m"
+        livenessProbe:
+          httpGet:
+            path: /_stcore/health
+            port: 8501
+          initialDelaySeconds: 60
+          periodSeconds: 30
+        readinessProbe:
+          httpGet:
+            path: /_stcore/health
+            port: 8501
+          initialDelaySeconds: 30
+          periodSeconds: 10
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: weather-home-service
+  namespace: weather-app
+  labels:
+    app: weather-home
+spec:
+  selector:
+    app: weather-home
+  ports:
+  - protocol: TCP
+    port: 8501
+    targetPort: 8501
+  type: NodePort
+
+---
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: weather-dashboard-service
+  namespace: weather-app
+  labels:
+    app: weather-dashboard
+    tier: frontend
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: weather-dashboard
+  template:
+    metadata:
+      labels:
+        app: weather-dashboard
+        tier: frontend
+    spec:
+      containers:
+      - name: weather-dashboard
+        image: docker.io/kvrr/weather-dashboard:v1
+        ports:
+        - containerPort: 8501
+        env:
+        - name: SERVICE_1_URL
+          valueFrom:
+            configMapKeyRef:
+              name: weather-config
+              key: SERVICE_1_URL
+        - name: SERVICE_2_URL
+          valueFrom:
+            configMapKeyRef:
+              name: weather-config
+              key: SERVICE_2_URL
+        resources:
+          requests:
+            memory: "512Mi"
+            cpu: "200m"
+            ephemeral-storage: "1Gi"
+          limits:
+            memory: "1Gi"
+            cpu: "800m"
+        livenessProbe:
+          httpGet:
+            path: /_stcore/health
+            port: 8501
+          initialDelaySeconds: 60
+          periodSeconds: 30
+        readinessProbe:
+          httpGet:
+            path: /_stcore/health
+            port: 8501
+          initialDelaySeconds: 30
+          periodSeconds: 10
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: weather-dashboard-service
+  namespace: weather-app
+  labels:
+    app: weather-dashboard
+spec:
+  selector:
+    app: weather-dashboard
+  ports:
+  - protocol: TCP
+    port: 8501
+    targetPort: 8501
+  type: NodePort
+
