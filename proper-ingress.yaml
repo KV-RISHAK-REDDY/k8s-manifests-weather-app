@@ -15,21 +15,17 @@ metadata:
     nginx.ingress.kubernetes.io/enable-cors: "true"
     nginx.ingress.kubernetes.io/cors-allow-origin: "*"
     nginx.ingress.kubernetes.io/cors-allow-methods: "GET, POST, OPTIONS"
-    # Important: Allow external access
-    nginx.ingress.kubernetes.io/proxy-redirect-from: "~^http://([^/]+)(.*)$"
-    nginx.ingress.kubernetes.io/proxy-redirect-to: "http://ec2-44-205-245-251.compute-1.amazonaws.com$2"
 spec:
   ingressClassName: nginx
   rules:
-  # Replace with your actual AWS instance's public domain
-  - host: ec2-44-205-245-251.compute-1.amazonaws.com  # Change this to your actual AWS public domain
+  - host: mausam.app
     http:
       paths:
-      - path: /
+      - path: /home
         pathType: Prefix
         backend:
           service:
-            name: weather-input-service
+            name: weather-home-service
             port:
               number: 8501
       - path: /dashboard
