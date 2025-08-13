@@ -14,7 +14,4 @@ data:
   GUNICORN_THREADS: "5"
   GUNICORN_BIND: "0.0.0.0:8080"
   DB_HOST: "192.168.49.2"
-  DB_PORT: "30297"
-  DB_NAME: "weather_app"
-  DB_USER: "weather_user"
-
+  DB_PORT: "30739"
