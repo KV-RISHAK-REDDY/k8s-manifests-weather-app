@@ -1,0 +1,48 @@
+# aws-weather-ingress.yaml - Modified for AWS instance access
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: weather-ingress
+  namespace: weather-app
+  annotations:
+    nginx.ingress.kubernetes.io/ssl-redirect: "false"
+    nginx.ingress.kubernetes.io/force-ssl-redirect: "false"
+    nginx.ingress.kubernetes.io/proxy-connect-timeout: "600"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "600"
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "600"
+    nginx.ingress.kubernetes.io/proxy-buffering: "off"
+    nginx.ingress.kubernetes.io/proxy-body-size: "10m"
+    nginx.ingress.kubernetes.io/enable-cors: "true"
+    nginx.ingress.kubernetes.io/cors-allow-origin: "*"
+    nginx.ingress.kubernetes.io/cors-allow-methods: "GET, POST, OPTIONS"
+    # Important: Allow external access
+    nginx.ingress.kubernetes.io/proxy-redirect-from: "~^http://([^/]+)(.*)$"
+    nginx.ingress.kubernetes.io/proxy-redirect-to: "http://ec2-44-205-245-251.compute-1.amazonaws.com$2"
+spec:
+  ingressClassName: nginx
+  rules:
+  # Replace with your actual AWS instance's public domain
+  - host: ec2-44-205-245-251.compute-1.amazonaws.com  # Change this to your actual AWS public domain
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: weather-input-service
+            port:
+              number: 8501
+      - path: /dashboard
+        pathType: Prefix
+        backend:
+          service:
+            name: weather-dashboard-service
+            port:
+              number: 8501
+      - path: /api
+        pathType: Prefix
+        backend:
+          service:
+            name: weather-api-service
+            port:
+              number: 8080

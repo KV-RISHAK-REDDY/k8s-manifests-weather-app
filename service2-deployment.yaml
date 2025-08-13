@@ -1,0 +1,143 @@
+# service2-deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: weather-api-service
+  namespace: weather-app
+  labels:
+    app: weather-api
+    tier: backend
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: weather-api
+  template:
+    metadata:
+      labels:
+        app: weather-api
+        tier: backend
+    spec:
+      initContainers:
+      - name: wait-for-postgres
+        image: postgres:17-alpine
+        env:
+        - name: POSTGRES_HOST
+          valueFrom:
+            configMapKeyRef:
+              name: weather-config
+              key: DB_HOST
+        - name: POSTGRES_USER
+          valueFrom:
+            secretKeyRef:
+              name: postgres-secret
+              key: postgres-user
+        - name: POSTGRES_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: postgres-secret
+              key: postgres-password
+        - name: POSTGRES_DB
+          valueFrom:
+            secretKeyRef:
+              name: postgres-secret
+              key: postgres-db
+        command:
+        - sh
+        - -c
+        - |
+          until pg_isready -h $POSTGRES_HOST -U $POSTGRES_USER -d $POSTGRES_DB; do
+            echo "Waiting for PostgreSQL to be ready..."
+            sleep 2
+          done
+          echo "PostgreSQL is ready!"
+      containers:
+      - name: weather-api
+        image: docker.io/kvrr/weather-api-handler:v5.2
+        ports:
+        - containerPort: 8080
+        env:
+        - name: WEATHER_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: weather-api-secret
+              key: weather-api-key
+        - name: WEATHER_API_BASE
+          valueFrom:
+            configMapKeyRef:
+              name: weather-config
+              key: WEATHER_API_BASE
+        - name: MAX_CONCURRENT_REQUESTS
+          valueFrom:
+            configMapKeyRef:
+              name: weather-config
+              key: MAX_CONCURRENT_REQUESTS
+        - name: REQUEST_TIMEOUT
+          valueFrom:
+            configMapKeyRef:
+              name: weather-config
+              key: REQUEST_TIMEOUT
+        - name: DB_HOST
+          valueFrom:
+            configMapKeyRef:
+              name: weather-config
+              key: DB_HOST
+        - name: DB_PORT
+          valueFrom:
+            configMapKeyRef:
+              name: weather-config
+              key: DB_PORT
+        - name: GUNICORN_PROCESSES
+          valueFrom:
+            configMapKeyRef:
+              name: weather-config
+              key: GUNICORN_PROCESSES
+        - name: GUNICORN_THREADS
+          valueFrom:
+            configMapKeyRef:
+              name: weather-config
+              key: GUNICORN_THREADS
+        - name: GUNICORN_BIND
+          valueFrom:
+            configMapKeyRef:
+              name: weather-config
+              key: GUNICORN_BIND
+        - name: DB_NAME
+          valueFrom:
+            secretKeyRef:
+              name: postgres-secret
+              key: postgres-db
+        - name: DB_USR
+          valueFrom:
+            secretKeyRef:
+              name: postgres-secret
+              key: postgres-user
+        - name: DB_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: postgres-secret
+              key: postgres-password
+        resources:
+          requests:
+            memory: "512Mi"
+            cpu: "200m"
+          limits:
+            memory: "1Gi"
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: weather-api-service
+  namespace: weather-app
+  labels:
+    app: weather-api
+spec:
+  selector:
+    app: weather-api
+  ports:
+  - protocol: TCP
+    port: 8080
+    targetPort: 8080
+  type: NodePort
+
